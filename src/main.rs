@@ -19,31 +19,23 @@ fn visit_dirs(dir: &Path, cb: &dyn Fn(&DirEntry)) -> io::Result<()> {
 }
 
 fn cb(entry: &DirEntry) -> () {
-    let metadata_result = entry.metadata();
-    if metadata_result.is_ok() {
-        // println!("{:?}", metadata);
-        let metadata = metadata_result.unwrap();
-        let modified_result = metadata.modified();
-        if modified_result.is_ok() {
-            println!("{:?}", modified_result.unwrap());
-        } else {
-            eprint!(
+    match entry.metadata() {
+        Ok(metadata) => match metadata.modified() {
+            Ok(modified) => println!("{:?}", modified),
+            Err(err) => eprint!(
                 "Couldn't get modified time for {:?}: {:?}",
                 entry.path(),
-                modified_result.unwrap_err()
-            );
-        }
-    } else {
-        eprint!(
-            "Couldn't get metadata for {:?}: {:?}",
-            entry.path(),
-            metadata_result.unwrap_err()
-        );
+                err
+            ),
+        },
+        Err(err) => eprint!("Couldn't get metadata for {:?}: {:?}", entry.path(), err),
     }
 }
 
 fn main() {
-    if let Err(err) = visit_dirs(Path::new("."), &cb) {
-        eprint!("{}", err);
+    let visit_result = visit_dirs(Path::new("."), &cb);
+    match visit_result {
+        Ok(()) => (),
+        Err(err) => eprint!("{}", err),
     }
 }
